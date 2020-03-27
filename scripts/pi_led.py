@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.00
-@date: 23/02/2020
+@version: 1.10
+@date: 27/03/2020
 '''
 
 #un-comment for actual deployment on Raspberry Pi
@@ -38,45 +38,45 @@ class led:
         self.led_id = led_id
         self.led_port_no = led_port_no
         self.led_history = False
-        self.led_state = 0
-        self.led_blink = 0
+        self.led_state_on = False
+        self.led_blink = False
         self.led_blink_interval = 0
         
         GPIO.setup(led_port_no, GPIO.OUT)
     
     def turn_on(self):
-        self.led_blink = 0
+        self.led_blink = False
         self.led_blink_interval = 0
         #print(f'turning on {self.led_id} LED')
-        if self.led_state == 0:
-            self.led_state = 1
+        if not self.led_state_on:
+            self.led_state_on = True
             GPIO.output(self.led_port_no,GPIO.HIGH)
             self.led_history = True
     
     def turn_off(self):
-        self.led_blink = 0
+        self.led_blink = False
         self.led_blink_interval = 0
         #print(f'turning off {self.led_id} LED')
-        if self.led_state == 1 or not self.led_history:
-            self.led_state = 0
+        if self.led_state_on or not self.led_history:
+            self.led_state_on = False
             GPIO.output(self.led_port_no,GPIO.LOW)
             self.led_history = True
     
     def blink(self, blink_interval):
-        self.led_blink = 1
+        self.led_blink = True
         #led_state should be set as well, since a blink cycle
         #will typically end with a HIGH power state
-        self.led_state = 1
+        self.led_state_on = True
         #print(f'blinking {self.led_id} LED')
         if self.led_blink_interval != blink_interval:
             self.led_blink_interval = blink_interval
-            while self.led_blink == 1:
+            while self.led_blink:
                 GPIO.output(self.led_port_no,GPIO.LOW)
                 sleep(blink_interval)
                 GPIO.output(self.led_port_no,GPIO.HIGH)
                 sleep(blink_interval)
             #check if a different thread has not turned off the LED,
             #and, if so, leave it in a LOW power state
-            if self.led_state == 0:
+            if not self.led_state_on:
                 GPIO.output(self.led_port_no,GPIO.LOW)
             self.led_history = True

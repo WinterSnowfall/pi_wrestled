@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.00
-@date: 23/02/2020
+@version: 1.10
+@date: 27/03/2020
 '''
 
 import threading
 import subprocess
 import logging
-from logging.handlers import RotatingFileHandler
+from logging import FileHandler
 from configparser import ConfigParser
 from os import path
 from time import sleep
@@ -26,7 +26,7 @@ conf_file_full_path = path.join('..', 'conf', 'led_array.conf')
 ##logging configuration block
 log_file_full_path = path.join('..', 'logs', 'pi_wrestled_service.log')
 logger_format = '%(asctime)s %(levelname)s >>> %(message)s'
-logger_file_handler = RotatingFileHandler(log_file_full_path, maxBytes=0, backupCount=0, encoding='utf-8')
+logger_file_handler = FileHandler(log_file_full_path, mode='w', encoding='utf-8')
 logger_file_formatter = logging.Formatter(logger_format)
 logger_file_handler.setFormatter(logger_file_formatter)
 logging.basicConfig(format=logger_format, level=logging.INFO) #DEBUG, INFO, WARNING, ERROR, CRITICAL
