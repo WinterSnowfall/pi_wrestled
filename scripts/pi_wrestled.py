@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.10
-@date: 27/03/2020
+@version: 1.20
+@date: 04/04/2020
 '''
 
 import threading
@@ -40,6 +40,7 @@ configParser.read(conf_file_full_path)
 
 KNIGHT_RIDER_INTERVAL = float(configParser['GENERAL']['knight_rider_interval'])
 IDLE_WATCHDOG_INTERVAL = int(configParser['GENERAL']['idle_watchdog_interval'])
+INIT_BLINK_INTERVAL = float(configParser['GENERAL']['init_blink_interval'])
 server_interface = configParser['GENERAL']['server_interface']
 server_port = int(configParser['GENERAL']['server_port'])
 
@@ -71,6 +72,7 @@ try:
     led_control = Flask(__name__)
     received = False
     knight_rider = False
+    init_mode_on = True
     
     def led_control_server(var_host, var_port):
         led_control.run(host=var_host, port=var_port)
@@ -119,10 +121,43 @@ try:
         
         with io_lock:
             logger.info('KR >>> Show\'s over.')
+            
+    def init_mode():
+        global init_mode_on
+        
+        with io_lock:
+            logger.info('IM >>> Entering init LED test mode...')
+            
+        odd_on_state = True
+            
+        while init_mode_on:
+            for led_number in range(1, len(led_array)):
+                if led_number % 2 == 1:
+                    if odd_on_state:
+                        led_array[led_number].turn_on()
+                    else:
+                        led_array[led_number].turn_off()
+                if led_number % 2 == 0:
+                    if odd_on_state:
+                        led_array[led_number].turn_off()
+                    else:
+                        led_array[led_number].turn_on()
+            
+            odd_on_state = not odd_on_state
+            
+            #wait before switching
+            sleep(INIT_BLINK_INTERVAL)
+                        
+        with io_lock:
+            logger.info('IM >>> Exiting init LED test mode...')
+                    
 
     @led_control.route('/pi_led', methods=['POST'])
     def post():
-        global received, knight_rider
+        global received, knight_rider, init_mode_on
+        
+        if init_mode_on:
+            init_mode_on = False
         
         with io_lock:
             logger.info('Processing request...')
@@ -222,15 +257,13 @@ try:
     [led_array[i].turn_off() for i in range(1, len(led_array))]
 
     logger.info('Running REST endpoint server...')
+    #need to io_lock loggers from this point on
     server_thread = threading.Thread(target=led_control_server, args=(host_ip, server_port))
     server_thread.setDaemon(True)
     server_thread.start()
     
-    #need to io_lock from now on
-    with io_lock:
-        logger.info('Entering Knight Rider mode...')
-    knight_rider = True
-    thread_array[0] = threading.Thread(target = knight_rider_mode)
+    #init LED test mode
+    thread_array[0] = threading.Thread(target = init_mode)
     thread_array[0].setDaemon(True)
     thread_array[0].start()
     
