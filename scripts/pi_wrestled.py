@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.20
-@date: 04/04/2020
+@version: 1.30
+@date: 05/04/2020
 '''
 
 import threading
@@ -66,7 +66,8 @@ try:
 except KeyError:
     logger.info(f'LED info parsing complete. Read {current_led_no - 1} entries.')
 
-thread_array = [None for i in range(len(led_array))]
+led_array_size = len(led_array)
+thread_array = [None for i in range(led_array_size)]
     
 try:
     led_control = Flask(__name__)
@@ -78,14 +79,12 @@ try:
         led_control.run(host=var_host, port=var_port)
         
     def knight_rider_mode():
-        global knight_rider
-        
         with io_lock:
             logger.info('KR >>> Starting the show...')
         
         while True:
             #ascending
-            for led_number in range(1, len(led_array)):
+            for led_number in range(1, led_array_size):
                 with io_lock:
                     logger.debug(f'KR >>> LED number: {led_number}')
                 
@@ -94,14 +93,14 @@ try:
                 else:
                     led_array[led_number].turn_on()
                     sleep(KNIGHT_RIDER_INTERVAL)
-                    if led_number != len(led_array) - 1:
+                    if led_number != led_array_size - 1:
                         led_array[led_number].turn_off()
                     
             with io_lock:                        
                 logger.debug('KR >>> Done ascending.')
                     
             #descending
-            for led_number in range(len(led_array) - 1, 1, -1):
+            for led_number in range(led_array_size - 1, 1, -1):
                 with io_lock:
                     logger.debug(f'KR >>> LED number: {led_number}')
                 
@@ -123,25 +122,17 @@ try:
             logger.info('KR >>> Show\'s over.')
             
     def init_mode():
-        global init_mode_on
-        
         with io_lock:
             logger.info('IM >>> Entering init LED test mode...')
             
         odd_on_state = True
             
         while init_mode_on:
-            for led_number in range(1, len(led_array)):
+            for led_number in range(1, led_array_size):
                 if led_number % 2 == 1:
-                    if odd_on_state:
-                        led_array[led_number].turn_on()
-                    else:
-                        led_array[led_number].turn_off()
-                if led_number % 2 == 0:
-                    if odd_on_state:
-                        led_array[led_number].turn_off()
-                    else:
-                        led_array[led_number].turn_on()
+                    led_array[led_number].turn_on() if odd_on_state else led_array[led_number].turn_off()
+                else:
+                    led_array[led_number].turn_off() if odd_on_state else led_array[led_number].turn_on()
             
             odd_on_state = not odd_on_state
             
@@ -229,7 +220,7 @@ try:
                  
                         knight_rider = True
                         
-                        [led_array[i].turn_off() for i in range(1, len(led_array))]
+                        [led_array[i].turn_off() for i in range(1, led_array_size)]
                         
                         thread_array[0] = threading.Thread(target = knight_rider_mode)
                         thread_array[0].setDaemon(True)
@@ -254,7 +245,7 @@ try:
 
     #reset all LEDs
     logger.debug('Resetting all LEDs...')
-    [led_array[i].turn_off() for i in range(1, len(led_array))]
+    [led_array[i].turn_off() for i in range(1, led_array_size)]
 
     logger.info('Running REST endpoint server...')
     #need to io_lock loggers from this point on
@@ -284,7 +275,7 @@ try:
             
 except:
     logger.debug('Turning off LEDs...')
-    [led_array[i].turn_off() for i in range(1, len(led_array))]
+    [led_array[i].turn_off() for i in range(1, led_array_size)]
     logger.debug('LEDs have been turned off.')
     #uncomment for debugging purposes only
     #raise
