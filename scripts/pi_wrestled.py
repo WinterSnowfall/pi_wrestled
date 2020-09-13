@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.30
-@date: 05/04/2020
+@version: 1.31
+@date: 10/09/2020
 '''
 
 import threading
@@ -29,7 +29,7 @@ logger_format = '%(asctime)s %(levelname)s >>> %(message)s'
 logger_file_handler = FileHandler(log_file_full_path, mode='w', encoding='utf-8')
 logger_file_formatter = logging.Formatter(logger_format)
 logger_file_handler.setFormatter(logger_file_formatter)
-logging.basicConfig(format=logger_format, level=logging.INFO) #DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(format=logger_format, level=logging.DEBUG) #DEBUG, INFO, WARNING, ERROR, CRITICAL
 logger = logging.getLogger(__name__)
 logger.addHandler(logger_file_handler)
 
@@ -93,14 +93,16 @@ try:
                 else:
                     led_array[led_number].turn_on()
                     sleep(KNIGHT_RIDER_INTERVAL)
-                    if led_number != led_array_size - 1:
+                    #cater for cases in which knight_rider mode is
+                    #turned off while the end led is on
+                    if led_number != led_array_size - 1 or not knight_rider:
                         led_array[led_number].turn_off()
                     
-            with io_lock:                        
+            with io_lock:
                 logger.debug('KR >>> Done ascending.')
                     
             #descending
-            for led_number in range(led_array_size - 1, 1, -1):
+            for led_number in range(led_array_size - 1, 0, -1):
                 with io_lock:
                     logger.debug(f'KR >>> LED number: {led_number}')
                 
@@ -109,10 +111,12 @@ try:
                 else:
                     led_array[led_number].turn_on()
                     sleep(KNIGHT_RIDER_INTERVAL)
-                    if led_number != 0:
+                    #cater for cases in which knight_rider mode is
+                    #turned off while the start led is on
+                    if led_number != 1 or not knight_rider:
                         led_array[led_number].turn_off()
 
-            with io_lock:                        
+            with io_lock:
                 logger.debug('KR >>> Done descending.')
             
             if not knight_rider:
