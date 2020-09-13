@@ -29,7 +29,7 @@ logger_format = '%(asctime)s %(levelname)s >>> %(message)s'
 logger_file_handler = FileHandler(log_file_full_path, mode='w', encoding='utf-8')
 logger_file_formatter = logging.Formatter(logger_format)
 logger_file_handler.setFormatter(logger_file_formatter)
-logging.basicConfig(format=logger_format, level=logging.DEBUG) #DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(format=logger_format, level=logging.INFO) #DEBUG, INFO, WARNING, ERROR, CRITICAL
 logger = logging.getLogger(__name__)
 logger.addHandler(logger_file_handler)
 
