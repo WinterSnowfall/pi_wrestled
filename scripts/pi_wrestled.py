@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.31
-@date: 10/09/2020
+@version: 1.40
+@date: 18/10/2020
 '''
 
 import threading
@@ -33,8 +33,6 @@ logging.basicConfig(format=logger_format, level=logging.INFO) #DEBUG, INFO, WARN
 logger = logging.getLogger(__name__)
 logger.addHandler(logger_file_handler)
 
-io_lock = threading.Lock()
-
 #reading from config file
 configParser.read(conf_file_full_path)
 
@@ -55,14 +53,14 @@ led_array = []
 led_array.append(led('knight_rider', 0))  #LED0
 
 #parsing generic parameters
-current_led_no = 1
+current_led_no = 0
 #port numbers need to be specified as per the Raspberry Pi pinout layout: https://pinout.xyz
 try:
     while True:
+        current_led_no += 1
         current_led_name = configParser[f'LED{current_led_no}']['name']
         current_led_port = int(configParser[f'LED{current_led_no}']['port'])
         led_array.append(led(current_led_name, current_led_port))
-        current_led_no += 1
 except KeyError:
     logger.info(f'LED info parsing complete. Read {current_led_no - 1} entries.')
 
@@ -79,14 +77,12 @@ try:
         led_control.run(host=var_host, port=var_port)
         
     def knight_rider_mode():
-        with io_lock:
-            logger.info('KR >>> Starting the show...')
+        logger.info('KR >>> Starting the show...')
         
         while True:
             #ascending
             for led_number in range(1, led_array_size):
-                with io_lock:
-                    logger.debug(f'KR >>> LED number: {led_number}')
+                logger.debug(f'KR >>> LED number: {led_number}')
                 
                 if not knight_rider:
                     break
@@ -98,13 +94,11 @@ try:
                     if led_number != led_array_size - 1 or not knight_rider:
                         led_array[led_number].turn_off()
                     
-            with io_lock:
-                logger.debug('KR >>> Done ascending.')
+            logger.debug('KR >>> Done ascending.')
                     
             #descending
             for led_number in range(led_array_size - 1, 0, -1):
-                with io_lock:
-                    logger.debug(f'KR >>> LED number: {led_number}')
+                logger.debug(f'KR >>> LED number: {led_number}')
                 
                 if not knight_rider:
                     break
@@ -116,18 +110,15 @@ try:
                     if led_number != 1 or not knight_rider:
                         led_array[led_number].turn_off()
 
-            with io_lock:
-                logger.debug('KR >>> Done descending.')
+            logger.debug('KR >>> Done descending.')
             
             if not knight_rider:
                 break
         
-        with io_lock:
-            logger.info('KR >>> Show\'s over.')
+        logger.info('KR >>> Show\'s over.')
             
     def init_mode():
-        with io_lock:
-            logger.info('IM >>> Entering init LED test mode...')
+        logger.info('IM >>> Entering init LED test mode...')
             
         odd_on_state = True
             
@@ -143,8 +134,7 @@ try:
             #wait before switching
             sleep(INIT_BLINK_INTERVAL)
                         
-        with io_lock:
-            logger.info('IM >>> Exiting init LED test mode...')
+        logger.info('IM >>> Exiting init LED test mode...')
                     
 
     @led_control.route('/pi_led', methods=['POST'])
@@ -154,30 +144,26 @@ try:
         if init_mode_on:
             init_mode_on = False
         
-        with io_lock:
-            logger.info('Processing request...')
-            logger.debug(request.is_json)
+        logger.info('Processing request...')
+        logger.debug(request.is_json)
             
         content_array = request.get_json()
         
-        with io_lock:
-            logger.debug(f'Received message: {content_array}')
-            logger.info('-------------------------')
+        logger.debug(f'Received message: {content_array}')
+        logger.info('-------------------------')
             
         for content in content_array:
             try:
-                with io_lock:
-                    logger.debug('Parsing JSON request element...')
+                logger.debug('Parsing JSON request element...')
                 
                 led_number = content['led_no']
                 led_state = content['state']
                 led_blink = content['blink']
                 
-                with io_lock:
-                    logger.info(f'LED number: {led_number}')
-                    logger.info(f'LED state: {led_state}')
-                    logger.info(f'LED blink interval: {led_blink}')
-                    logger.info('-------------------------')
+                logger.info(f'LED number: {led_number}')
+                logger.info(f'LED state: {led_state}')
+                logger.info(f'LED blink interval: {led_blink}')
+                logger.info('-------------------------')
                     
                 #regular LED control logic
                 if led_number != 0:
@@ -187,13 +173,11 @@ try:
                     
                     if led_state == 1 and led_blink == 0:
                         led_array[led_number].turn_on()
-                        with io_lock:
-                            logger.debug('LED turned on.')
+                        logger.debug('LED turned on.')
                         
                     elif led_state == 0:
                         led_array[led_number].turn_off()
-                        with io_lock:
-                            logger.debug('LED turned off.')
+                        logger.debug('LED turned off.')
                         
                     elif led_state == 1 and led_blink != 0:
                         try:
@@ -207,20 +191,17 @@ try:
                         thread_array[led_number].setDaemon(True)
                         thread_array[led_number].start()
                         
-                        with io_lock:
-                            logger.debug('LED is bliking.')
+                        logger.debug('LED is bliking.')
                     else:
                         raise Exception()
                         
                 #Knight Rider mode
                 else:
                     if knight_rider and led_state == 1:
-                        with io_lock:
-                            logger.warning('Knight Rider mode is already active!')
+                        logger.warning('Knight Rider mode is already active!')
                     
                     elif not knight_rider and led_state == 1 :
-                        with io_lock:
-                            logger.info('Turning on Knight Rider mode!')
+                        logger.info('Turning on Knight Rider mode!')
                  
                         knight_rider = True
                         
@@ -230,20 +211,17 @@ try:
                         thread_array[0].setDaemon(True)
                         thread_array[0].start()
                     else:
-                        with io_lock:
-                            logger.info('Turning off Knight Rider mode.')
+                        logger.info('Turning off Knight Rider mode.')
                         
                         knight_rider = False
                         sleep(KNIGHT_RIDER_INTERVAL)
                         
             except:
-                with io_lock:
-                    logger.error('Invalid operation!')
+                logger.error('Invalid operation!')
                 return Response('Invalid operation!', status=403, mimetype='text/html')
         
         received = True
-        with io_lock:
-            logger.info('Request processing completed.')
+        logger.info('Request processing completed.')
         
         return 'Operation completed!'
 
@@ -252,7 +230,7 @@ try:
     [led_array[i].turn_off() for i in range(1, led_array_size)]
 
     logger.info('Running REST endpoint server...')
-    #need to io_lock loggers from this point on
+    
     server_thread = threading.Thread(target=led_control_server, args=(host_ip, server_port))
     server_thread.setDaemon(True)
     server_thread.start()
@@ -262,20 +240,21 @@ try:
     thread_array[0].setDaemon(True)
     thread_array[0].start()
     
-    with io_lock:
-        #idle watchdog
-        logger.info('Idle watchdog activated...')
+    #idle watchdog
+    logger.info('Idle watchdog activated...')
+    
     while True:
         #sleep for an interval
         sleep(IDLE_WATCHDOG_INTERVAL)
-        with io_lock:
-            logger.info('Idle watchdog wakeup...')
-            if (not received):
-                logger.warning('Idle watchdog has detected a timeout!')
-                raise Exception()
-            else:
-                logger.info('Idle watchdog reset...')
-                received = False
+        
+        logger.info('Idle watchdog wakeup...')
+        
+        if (not received):
+            logger.warning('Idle watchdog has detected a timeout!')
+            raise Exception()
+        else:
+            logger.info('Idle watchdog reset...')
+            received = False
             
 except:
     logger.debug('Turning off LEDs...')
