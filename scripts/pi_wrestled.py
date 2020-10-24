@@ -7,8 +7,8 @@
 
 import threading
 import subprocess
+import signal
 import logging
-from logging import FileHandler
 from configparser import ConfigParser
 from os import path
 from time import sleep
@@ -25,13 +25,21 @@ conf_file_full_path = path.join('..', 'conf', 'led_array.conf')
 
 ##logging configuration block
 log_file_full_path = path.join('..', 'logs', 'pi_wrestled_service.log')
+logger_file_handler = logging.FileHandler(log_file_full_path, mode='w', encoding='utf-8')
 logger_format = '%(asctime)s %(levelname)s >>> %(message)s'
-logger_file_handler = FileHandler(log_file_full_path, mode='w', encoding='utf-8')
-logger_file_formatter = logging.Formatter(logger_format)
-logger_file_handler.setFormatter(logger_file_formatter)
+logger_file_handler.setFormatter(logging.Formatter(logger_format))
 logging.basicConfig(format=logger_format, level=logging.INFO) #DEBUG, INFO, WARNING, ERROR, CRITICAL
 logger = logging.getLogger(__name__)
 logger.addHandler(logger_file_handler)
+
+def sigterm_handler(signum, frame):
+    logger.info('Stopping wrestled due to SIGTERM...')
+    
+    logger.debug('Turning off LEDs...')
+    [led_array[i].turn_off() for i in range(1, led_array_size)]
+    logger.debug('LEDs have been turned off.')
+    
+    raise SystemExit(0)
 
 #reading from config file
 configParser.read(conf_file_full_path)
@@ -44,7 +52,7 @@ server_port = int(configParser['GENERAL']['server_port'])
 
 #find out the host's main IP
 logger.debug('Detecting host IP address...')
-host_ip = subprocess.Popen(f"ip addr show {server_interface} | grep global | awk '{{print $2}}' | sed 's/\/.*//g'", 
+host_ip = subprocess.Popen(f'ip addr show {server_interface} | grep global | awk \'{{print $2}}\' | sed \'s/\/.*//g\'', 
                            shell=True, stdout=subprocess.PIPE).stdout.read().decode('utf-8').strip()
 logger.debug(f'Host address is: {host_ip}')
 
@@ -239,6 +247,9 @@ try:
     thread_array[0] = threading.Thread(target = init_mode)
     thread_array[0].setDaemon(True)
     thread_array[0].start()
+    
+    #catch SIGTERM and exit gracefully
+    signal.signal(signal.SIGTERM, sigterm_handler)
     
     #idle watchdog
     logger.info('Idle watchdog activated...')
