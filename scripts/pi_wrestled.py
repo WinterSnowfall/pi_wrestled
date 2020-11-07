@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.40
-@date: 18/10/2020
+@version: 1.50
+@date: 06/11/2020
 '''
 
 import threading
@@ -195,8 +195,8 @@ try:
                         except AttributeError:
                             pass
                         
-                        thread_array[led_number] = threading.Thread(target = led_array[led_number].blink, args = (led_blink, ))
-                        thread_array[led_number].setDaemon(True)
+                        thread_array[led_number] = threading.Thread(target=led_array[led_number].blink, 
+                                                                    args=(led_blink, ), daemon=True)
                         thread_array[led_number].start()
                         
                         logger.debug('LED is bliking.')
@@ -215,8 +215,7 @@ try:
                         
                         [led_array[i].turn_off() for i in range(1, led_array_size)]
                         
-                        thread_array[0] = threading.Thread(target = knight_rider_mode)
-                        thread_array[0].setDaemon(True)
+                        thread_array[0] = threading.Thread(target=knight_rider_mode, daemon=True)
                         thread_array[0].start()
                     else:
                         logger.info('Turning off Knight Rider mode.')
@@ -239,13 +238,11 @@ try:
 
     logger.info('Running REST endpoint server...')
     
-    server_thread = threading.Thread(target=led_control_server, args=(host_ip, server_port))
-    server_thread.setDaemon(True)
+    server_thread = threading.Thread(target=led_control_server, args=(host_ip, server_port), daemon=True)
     server_thread.start()
     
     #init LED test mode
-    thread_array[0] = threading.Thread(target = init_mode)
-    thread_array[0].setDaemon(True)
+    thread_array[0] = threading.Thread(target=init_mode, daemon=True)
     thread_array[0].start()
     
     #catch SIGTERM and exit gracefully
@@ -260,7 +257,7 @@ try:
         
         logger.info('Idle watchdog wakeup...')
         
-        if (not received):
+        if not received:
             logger.warning('Idle watchdog has detected a timeout!')
             raise Exception()
         else:
