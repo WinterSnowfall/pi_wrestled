@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.50
-@date: 06/11/2020
+@version: 1.60
+@date: 29/12/2020
 '''
 
 import threading
@@ -43,12 +43,13 @@ def sigterm_handler(signum, frame):
 
 #reading from config file
 configParser.read(conf_file_full_path)
+general_section = configParser['GENERAL']
 
-KNIGHT_RIDER_INTERVAL = float(configParser['GENERAL']['knight_rider_interval'])
-IDLE_WATCHDOG_INTERVAL = int(configParser['GENERAL']['idle_watchdog_interval'])
-INIT_BLINK_INTERVAL = float(configParser['GENERAL']['init_blink_interval'])
-server_interface = configParser['GENERAL']['server_interface']
-server_port = int(configParser['GENERAL']['server_port'])
+KNIGHT_RIDER_INTERVAL = general_section.getfloat('knight_rider_interval')
+IDLE_WATCHDOG_INTERVAL = general_section.getint('idle_watchdog_interval')
+INIT_BLINK_INTERVAL = general_section.getfloat('init_blink_interval')
+server_interface = general_section.get('server_interface')
+server_port = general_section.getint('server_port')
 
 #find out the host's main IP
 logger.debug('Detecting host IP address...')
