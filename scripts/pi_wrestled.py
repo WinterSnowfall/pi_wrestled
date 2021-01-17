@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.60
-@date: 29/12/2020
+@version: 1.80
+@date: 17/01/2021
 '''
 
 import threading
@@ -16,6 +16,8 @@ from pi_led import led
 from flask import Flask
 from flask import request
 from flask import Response
+#uncomment for debugging purposes only
+#import traceback
 
 ##global parameters init
 configParser = ConfigParser()
@@ -24,7 +26,7 @@ configParser = ConfigParser()
 conf_file_full_path = path.join('..', 'conf', 'led_array.conf')
 
 ##logging configuration block
-log_file_full_path = path.join('..', 'logs', 'pi_wrestled_service.log')
+log_file_full_path = path.join('..', 'logs', 'pi_wrestled.log')
 logger_file_handler = logging.FileHandler(log_file_full_path, mode='w', encoding='utf-8')
 logger_format = '%(asctime)s %(levelname)s >>> %(message)s'
 logger_file_handler.setFormatter(logging.Formatter(logger_format))
@@ -46,6 +48,10 @@ configParser.read(conf_file_full_path)
 general_section = configParser['GENERAL']
 
 KNIGHT_RIDER_INTERVAL = general_section.getfloat('knight_rider_interval')
+### non-zero values will allow you to use a subset of the LED array for Knight Rider mode ###
+KNIGHT_RIDER_START_LED = general_section.getint('knight_rider_start_led')
+KNIGHT_RIDER_STOP_LED = general_section.getint('knight_rider_stop_led')
+#############################################################################################
 IDLE_WATCHDOG_INTERVAL = general_section.getint('idle_watchdog_interval')
 INIT_BLINK_INTERVAL = general_section.getfloat('init_blink_interval')
 server_interface = general_section.get('server_interface')
@@ -58,8 +64,8 @@ host_ip = subprocess.Popen(f'ip addr show {server_interface} | grep global | awk
 logger.debug(f'Host address is: {host_ip}')
 
 led_array = []
-#special non-functional soft LED
-led_array.append(led('knight_rider', 0))  #LED0
+#soft LED used for various effects
+led_array.append(led('knight_rider', 0))
 
 #parsing generic parameters
 current_led_no = 0
@@ -67,13 +73,23 @@ current_led_no = 0
 try:
     while True:
         current_led_no += 1
-        current_led_name = configParser[f'LED{current_led_no}']['name']
-        current_led_port = int(configParser[f'LED{current_led_no}']['port'])
+        current_led_section = configParser[f'LED{current_led_no}']
+        current_led_name = current_led_section.get('name')
+        current_led_port = current_led_section.getint('port')
         led_array.append(led(current_led_name, current_led_port))
 except KeyError:
     logger.info(f'LED info parsing complete. Read {current_led_no - 1} entries.')
 
 led_array_size = len(led_array)
+
+#set default values for knight rider mode if no start/stop LEDs are specified
+#(will use the entire LED array, as defined in the config file)
+if KNIGHT_RIDER_START_LED == 0:
+    KNIGHT_RIDER_START_LED = 1
+
+if KNIGHT_RIDER_STOP_LED == 0:
+    KNIGHT_RIDER_STOP_LED = led_array_size - 1
+
 thread_array = [None for i in range(led_array_size)]
     
 try:
@@ -86,11 +102,11 @@ try:
         led_control.run(host=var_host, port=var_port)
         
     def knight_rider_mode():
-        logger.info('KR >>> Starting the show...')
+        logger.debug('KR >>> Starting the show...')
         
         while True:
             #ascending
-            for led_number in range(1, led_array_size):
+            for led_number in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1):
                 logger.debug(f'KR >>> LED number: {led_number}')
                 
                 if not knight_rider:
@@ -98,7 +114,7 @@ try:
                 else:
                     led_array[led_number].turn_on()
                     sleep(KNIGHT_RIDER_INTERVAL)
-                    #cater for cases in which knight_rider mode is
+                    #cater for cases in which Knight Rider mode is
                     #turned off while the end led is on
                     if led_number != led_array_size - 1 or not knight_rider:
                         led_array[led_number].turn_off()
@@ -106,7 +122,7 @@ try:
             logger.debug('KR >>> Done ascending.')
                     
             #descending
-            for led_number in range(led_array_size - 1, 0, -1):
+            for led_number in range(KNIGHT_RIDER_STOP_LED, 0, -1):
                 logger.debug(f'KR >>> LED number: {led_number}')
                 
                 if not knight_rider:
@@ -114,7 +130,7 @@ try:
                 else:
                     led_array[led_number].turn_on()
                     sleep(KNIGHT_RIDER_INTERVAL)
-                    #cater for cases in which knight_rider mode is
+                    #cater for cases in which Knight Rider mode is
                     #turned off while the start led is on
                     if led_number != 1 or not knight_rider:
                         led_array[led_number].turn_off()
@@ -124,10 +140,10 @@ try:
             if not knight_rider:
                 break
         
-        logger.info('KR >>> Show\'s over.')
+        logger.debug('KR >>> Show\'s over.')
             
     def init_mode():
-        logger.info('IM >>> Entering init LED test mode...')
+        logger.debug('IM >>> Entering init LED test mode...')
             
         odd_on_state = True
             
@@ -140,10 +156,12 @@ try:
             
             odd_on_state = not odd_on_state
             
-            #wait before switching
             sleep(INIT_BLINK_INTERVAL)
-                        
-        logger.info('IM >>> Exiting init LED test mode...')
+            
+        logger.debug('Resetting all LEDs...')
+        [led_array[i].turn_off() for i in range(1, led_array_size)]
+            
+        logger.debug('IM >>> Exiting init LED test mode...')
                     
 
     @led_control.route('/pi_led', methods=['POST'])
@@ -152,14 +170,15 @@ try:
         
         if init_mode_on:
             init_mode_on = False
+            thread_array[0].join()
         
         logger.info('Processing request...')
-        logger.debug(request.is_json)
-            
+        
+        logger.debug(f'REST payload JSON conformance: {request.is_json}')    
         content_array = request.get_json()
         
         logger.debug(f'Received message: {content_array}')
-        logger.info('-------------------------')
+        logger.info('-----------------------------')
             
         for content in content_array:
             try:
@@ -172,21 +191,26 @@ try:
                 logger.info(f'LED number: {led_number}')
                 logger.info(f'LED state: {led_state}')
                 logger.info(f'LED blink interval: {led_blink}')
-                logger.info('-------------------------')
+                logger.info('-----------------------------')
                     
                 #regular LED control logic
                 if led_number != 0:
                     if knight_rider:
-                        knight_rider = False
-                        sleep(KNIGHT_RIDER_INTERVAL)
-                    
-                    if led_state == 1 and led_blink == 0:
-                        led_array[led_number].turn_on()
-                        logger.debug('LED turned on.')
+                        if led_number >= KNIGHT_RIDER_START_LED and led_number <= KNIGHT_RIDER_STOP_LED:
+                            logger.info('Turning off Knight Rider mode...')
+                            
+                            knight_rider = False
+                            thread_array[0].join()
+                        else:
+                            logger.debug('Current LED is outside of the Knight Rider LED range.')
                         
-                    elif led_state == 0:
+                    if led_state == 0:
                         led_array[led_number].turn_off()
                         logger.debug('LED turned off.')
+                    
+                    elif led_state == 1 and led_blink == 0:
+                        led_array[led_number].turn_on()
+                        logger.debug('LED turned on.')
                         
                     elif led_state == 1 and led_blink != 0:
                         try:
@@ -199,41 +223,47 @@ try:
                         thread_array[led_number] = threading.Thread(target=led_array[led_number].blink, 
                                                                     args=(led_blink, ), daemon=True)
                         thread_array[led_number].start()
-                        
                         logger.debug('LED is bliking.')
+                    
                     else:
-                        raise Exception()
+                        raise Exception('Invalid LED state.')
                         
                 #Knight Rider mode
                 else:
                     if knight_rider and led_state == 1:
-                        logger.warning('Knight Rider mode is already active!')
+                        logger.warning('Knight Rider mode is already active.')
+                        
+                    elif not knight_rider and led_state == 0 :
+                        logger.info('Turning off Knight Rider mode...')
+                        
+                        knight_rider = False
+                        thread_array[0].join()
                     
                     elif not knight_rider and led_state == 1 :
-                        logger.info('Turning on Knight Rider mode!')
+                        logger.info('Turning on Knight Rider mode...')
                  
                         knight_rider = True
                         
-                        [led_array[i].turn_off() for i in range(1, led_array_size)]
+                        [led_array[i].turn_off() for i in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1)]
                         
                         thread_array[0] = threading.Thread(target=knight_rider_mode, daemon=True)
                         thread_array[0].start()
+                    
                     else:
-                        logger.info('Turning off Knight Rider mode.')
-                        
-                        knight_rider = False
-                        sleep(KNIGHT_RIDER_INTERVAL)
-                        
+                        raise Exception('Invalid Knight Rider state.')
+                    
             except:
-                logger.error('Invalid operation!')
-                return Response('Invalid operation!', status=403, mimetype='text/html')
+                #uncomment for debugging purposes only
+                #logger.error(traceback.format_exc())
+                
+                logger.error('Invalid operation.')
+                return Response('Invalid operation.', status=403, mimetype='text/html')
         
-        received = True
         logger.info('Request processing completed.')
+        received = True
         
-        return 'Operation completed!'
+        return 'Operation completed.'
 
-    #reset all LEDs
     logger.debug('Resetting all LEDs...')
     [led_array[i].turn_off() for i in range(1, led_array_size)]
 
@@ -242,27 +272,25 @@ try:
     server_thread = threading.Thread(target=led_control_server, args=(host_ip, server_port), daemon=True)
     server_thread.start()
     
-    #init LED test mode
-    thread_array[0] = threading.Thread(target=init_mode, daemon=True)
-    thread_array[0].start()
-    
     #catch SIGTERM and exit gracefully
     signal.signal(signal.SIGTERM, sigterm_handler)
     
-    #idle watchdog
-    logger.info('Idle watchdog activated...')
+    logger.info('Starting LED test mode...')
+    thread_array[0] = threading.Thread(target=init_mode, daemon=True)
+    thread_array[0].start()
+    
+    logger.info('Activating idle watchdog...')
     
     while True:
-        #sleep for an interval
         sleep(IDLE_WATCHDOG_INTERVAL)
         
-        logger.info('Idle watchdog wakeup...')
+        logger.debug('Idle watchdog wakeup...')
         
         if not received:
-            logger.warning('Idle watchdog has detected a timeout!')
+            logger.warning('Idle watchdog has detected a timeout.')
             raise Exception()
         else:
-            logger.info('Idle watchdog reset...')
+            logger.debug('Idle watchdog reset...')
             received = False
             
 except:
@@ -270,6 +298,6 @@ except:
     [led_array[i].turn_off() for i in range(1, led_array_size)]
     logger.debug('LEDs have been turned off.')
     #uncomment for debugging purposes only
-    #raise
+    #logger.error(traceback.format_exc())
 
 logger.info('REST endpoint server terminated.')
