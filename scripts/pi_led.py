@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 1.10
-@date: 27/03/2020
+@version: 1.20
+@date: 01/02/2021
 '''
 
 #un-comment for actual deployment on Raspberry Pi
@@ -13,6 +13,11 @@ from time import sleep
 #dummy GPIO "simulator" class & object
 #comment for actual deployment on Raspberry Pi
 class GPIO_DUMMY:
+    HIGH = '3.3V'
+    LOW = '0V'
+    BCM = 'BCM'
+    OUT = 'OUT'
+    
     def output(self, port_no, value):
         print(f'SIMULATOR: Port {port_no} set to {value}')
     def setup(self, port_no, port_type):
@@ -21,12 +26,7 @@ class GPIO_DUMMY:
         print(f'SIMULATOR: General mode set to {general_mode}')
     def setwarnings(self, flag):
         print(f'SIMULATOR: Warnings set to {flag}')
-        
-    HIGH = '3.3V'
-    LOW = '0V'
-    BCM = 'BCM'
-    OUT = 'OUT'
-    
+
 GPIO = GPIO_DUMMY()
 #'''
 
