@@ -1,0 +1,119 @@
+{
+	"info": {
+		"_postman_id": "c74d9092-e926-4df1-bcbc-89b5acd6b53a",
+		"name": "wrestled",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Set LED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var led_no_local = pm.collectionVariables.get(\"led_no\");",
+							"",
+							"if (led_no_local < pm.collectionVariables.get(\"led_total\")) {",
+							"    pm.collectionVariables.set(\"led_no\", ++led_no_local);",
+							"}",
+							"else {",
+							"    pm.collectionVariables.set(\"led_no\", 1);",
+							"}",
+							"",
+							"pm.collectionVariables.set(\"last_response\", pm.response.text());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"led_no\": {{led_no}},\n        \"state\": 0,\n        \"blink\": 0\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pi_led",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pi_led"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Set LED (From CSV)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"led_no\": {{led_no_csv}},\n        \"state\": {{led_state_csv}},\n        \"blink\": {{led_blink_csv}}\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pi_led",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pi_led"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "led_no",
+			"value": "1"
+		},
+		{
+			"key": "led_total",
+			"value": "16"
+		},
+		{
+			"key": "last_response",
+			"value": ""
+		}
+	]
+}
