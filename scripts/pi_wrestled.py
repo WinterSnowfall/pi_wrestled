@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.00
-@date: 01/02/2021
+@version: 2.10
+@date: 23/09/2021
 '''
 
 import threading
@@ -31,7 +31,7 @@ logger_file_handler = logging.FileHandler(log_file_full_path, mode='w', encoding
 logger_format = '%(asctime)s %(levelname)s >>> %(message)s'
 logger_file_handler.setFormatter(logging.Formatter(logger_format))
 #logging level for other modules
-logging.basicConfig(format=logger_format, level=logging.WARNING) #DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(format=logger_format, level=logging.ERROR) #DEBUG, INFO, WARNING, ERROR, CRITICAL
 logger = logging.getLogger(__name__)
 #logging level for current logger
 logger.setLevel(logging.INFO) #DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -41,7 +41,8 @@ def sigterm_handler(signum, frame):
     logger.info('Stopping wrestled due to SIGTERM...')
     
     logger.debug('Turning off LEDs...')
-    [led_array[i].turn_off() for i in range(1, led_array_size)]
+    for i in range(1, led_array_size):
+        led_array[i].turn_off()
     logger.debug('LEDs have been turned off.')
     
     raise SystemExit(0)
@@ -62,7 +63,7 @@ server_port = general_section.getint('server_port')
 
 #find out the host's main IP
 logger.debug('Detecting host IP address...')
-host_ip = subprocess.Popen(f'ip addr show {server_interface} | grep global | awk \'{{print $2}}\' | sed \'s/\/.*//g\'', 
+host_ip = subprocess.Popen(f'ip addr show {server_interface} | grep global | cut -d " " -f6 | cut -d "/" -f1', 
                            shell=True, stdout=subprocess.PIPE).stdout.read().decode('utf-8').strip()
 logger.debug(f'Host address is: {host_ip}')
 
@@ -153,16 +154,23 @@ try:
         while init_mode_on:
             for led_number in range(1, led_array_size):
                 if led_number % 2 == 1:
-                    led_array[led_number].turn_on() if odd_on_state else led_array[led_number].turn_off()
+                    if odd_on_state: 
+                        led_array[led_number].turn_on()
+                    else:
+                        led_array[led_number].turn_off()
                 else:
-                    led_array[led_number].turn_off() if odd_on_state else led_array[led_number].turn_on()
+                    if odd_on_state:
+                        led_array[led_number].turn_off()
+                    else: 
+                        led_array[led_number].turn_on()
             
             odd_on_state = not odd_on_state
             
             sleep(INIT_BLINK_INTERVAL)
             
         logger.debug('Resetting all LEDs...')
-        [led_array[i].turn_off() for i in range(1, led_array_size)]
+        for i in range(1, led_array_size):
+            led_array[i].turn_off()
             
         logger.debug('IM >>> Exiting init LED test mode...')
                     
@@ -236,18 +244,19 @@ try:
                     if knight_rider and led_state == 1:
                         logger.warning('Knight Rider mode is already active.')
                         
-                    elif not knight_rider and led_state == 0 :
+                    elif not knight_rider and led_state == 0:
                         logger.info('Turning off Knight Rider mode...')
                         
                         knight_rider = False
                         thread_array[0].join()
                     
-                    elif not knight_rider and led_state == 1 :
+                    elif not knight_rider and led_state == 1:
                         logger.info('Turning on Knight Rider mode...')
                  
                         knight_rider = True
                         
-                        [led_array[i].turn_off() for i in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1)]
+                        for i in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1):
+                            led_array[i].turn_off()
                         
                         thread_array[0] = threading.Thread(target=knight_rider_mode, daemon=True)
                         thread_array[0].start()
@@ -270,7 +279,8 @@ try:
     ##main thread start
 
     logger.debug('Resetting all LEDs...')
-    [led_array[i].turn_off() for i in range(1, led_array_size)]
+    for i in range(1, led_array_size):
+        led_array[i].turn_off()
 
     logger.info('Running REST endpoint server...')
     
@@ -302,7 +312,8 @@ try:
             
 except:
     logger.debug('Turning off LEDs...')
-    [led_array[i].turn_off() for i in range(1, led_array_size)]
+    for i in range(1, led_array_size):
+        led_array[i].turn_off()
     logger.debug('LEDs have been turned off.')
     #uncomment for debugging purposes only
     #logger.error(traceback.format_exc())
