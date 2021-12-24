@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.30
-@date: 14/11/2021
+@version: 2.40
+@date: 24/12/2021
 '''
 
 import threading
@@ -278,7 +278,11 @@ def post():
                     knight_rider = True
                     
                     for i in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1):
-                        led_array[i].turn_off()
+                        if blink_array[led_number]:
+                            blink_array[led_number] = False
+                            thread_array[led_number].join()
+                        else:
+                            led_array[i].turn_off()
                     
                     thread_array[0] = threading.Thread(target=knight_rider_mode, daemon=True)
                     thread_array[0].start()
