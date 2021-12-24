@@ -278,9 +278,9 @@ def post():
                     knight_rider = True
                     
                     for i in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1):
-                        if blink_array[led_number]:
-                            blink_array[led_number] = False
-                            thread_array[led_number].join()
+                        if blink_array[i]:
+                            blink_array[i] = False
+                            thread_array[i].join()
                         else:
                             led_array[i].turn_off()
                     
