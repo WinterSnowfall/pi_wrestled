@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.40
-@date: 24/12/2021
+@version: 2.50
+@date: 08/01/2022
 '''
 
 import threading
@@ -143,13 +143,17 @@ def led_blink_mode(led_number, led_blink):
     if led_array[led_number].is_on():
         led_array[led_number].turn_off()
     
-    while blink_array[led_number]:
+    while True:
         sleep(led_blink)
         led_array[led_number].turn_on()
+        if not blink_array[led_number]:
+            logger.debug(f'BM >>> LED {led_number} stopped blinking (on state).')
+            return
         sleep(led_blink)
         led_array[led_number].turn_off()
-        
-    logger.debug(f'BM >>> LED {led_number} stopped blinking.')
+        if not blink_array[led_number]:
+            logger.debug(f'BM >>> LED {led_number} stopped blinking (off state).')
+            return
     
 def knight_rider_mode():
     logger.debug('KR >>> Starting the show...')

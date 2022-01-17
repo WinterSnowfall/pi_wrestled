@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.40
-@date: 24/12/2021
+@version: 2.50
+@date: 08/01/2022
 '''
 
 #un-comment for actual deployment on Raspberry Pi
