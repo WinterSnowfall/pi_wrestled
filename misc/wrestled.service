@@ -1,0 +1,14 @@
+[Unit]
+Description=pi_wrestled led control service
+After=network.target
+
+[Service]
+Type=simple
+User=username
+StandardOutput=null
+WorkingDirectory=/home/username/pi_wrestled/scripts
+ExecStart=/home/username/pi_wrestled/scripts/pi_wrestled.py
+
+[Install]
+WantedBy=multi-user.target
+
