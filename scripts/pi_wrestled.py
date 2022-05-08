@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.50
-@date: 08/01/2022
+@version: 2.60
+@date: 08/05/2022
 '''
 
 import threading
-import subprocess
 import signal
 import logging
 from configparser import ConfigParser
@@ -48,14 +47,7 @@ KNIGHT_RIDER_STOP_LED = general_section.getint('knight_rider_stop_led')
 #############################################################################################
 IDLE_WATCHDOG_INTERVAL = general_section.getint('idle_watchdog_interval')
 INIT_BLINK_INTERVAL = general_section.getfloat('init_blink_interval')
-server_interface = general_section.get('server_interface')
 server_port = general_section.getint('server_port')
-
-#find out the host's main IP
-logger.debug('Detecting host IP address...')
-host_ip = subprocess.Popen(f'ip addr show {server_interface} | grep global | cut -d " " -f6 | cut -d "/" -f1', 
-                           shell=True, stdout=subprocess.PIPE).stdout.read().decode('utf-8').strip()
-logger.debug(f'Host address is: {host_ip}')
 
 led_array = []
 #soft LED used for various effects
@@ -311,7 +303,8 @@ def post():
 try:
     logger.info('Running REST endpoint server...')
     
-    server_thread = threading.Thread(target=led_control_server, args=(host_ip, server_port), daemon=True)
+    #use '0.0.0.0' to listen on all network interfaces, regardless of link status during startup
+    server_thread = threading.Thread(target=led_control_server, args=('0.0.0.0', server_port), daemon=True)
     server_thread.start()
     
     #catch SIGTERM and exit gracefully
