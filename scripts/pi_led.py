@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.60
-@date: 08/05/2022
+@version: 2.70
+@date: 08/08/2022
 '''
 
 #un-comment for actual deployment on Raspberry Pi
@@ -43,13 +43,13 @@ class led:
     
     def turn_on(self):
         #print(f'turning on {self.led_id} LED')
-        if self._led_state_on is None or not self._led_state_on:
+        if not self._led_state_on or self._led_state_on is None:
             GPIO.output(self._led_port_no, GPIO.HIGH)
             self._led_state_on = True
     
     def turn_off(self):
         #print(f'turning off {self.led_id} LED')
-        if self._led_state_on is None or self._led_state_on:
+        if self._led_state_on or self._led_state_on is None:
             GPIO.output(self._led_port_no, GPIO.LOW)
             self._led_state_on = False
             
