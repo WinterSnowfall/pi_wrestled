@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.80
-@date: 10/12/2022
+@version: 2.90
+@date: 12/12/2022
 '''
 
 import threading
@@ -54,7 +54,7 @@ def led_init_mode():
     
     odd_on_state = True
     
-    while not init_event_stop.is_set():
+    while not init_mode_stop.is_set():
         for led_number in range(1, led_array_size):
             if led_number % 2 == 1:
                 if odd_on_state:
@@ -117,8 +117,8 @@ def knight_rider_mode():
 
 @led_control.route('/pi_led', methods=['POST'])
 def post():
-    if not init_event_stop.is_set():
-        init_event_stop.set()
+    if not init_mode_stop.is_set():
+        init_mode_stop.set()
         init_mode_thread.join()
     
     #the Knight Rider thread is stored as part of soft LED 0
@@ -150,7 +150,6 @@ def post():
                 if not knight_rider_stop.is_set():
                     if led_number >= KNIGHT_RIDER_START_LED and led_number <= KNIGHT_RIDER_STOP_LED:
                         logger.info('Turning off Knight Rider mode...')
-                        
                         knight_rider_stop.set()
                         knight_rider_thread.join()
                     else:
@@ -159,10 +158,8 @@ def post():
                 #wait for LED blink to finalize if active
                 if led_array[led_number].is_blinking():
                     logger.debug('Stopping active LED blink thread...')
-                    
                     led_array[led_number].turn_off()
                     led_array[led_number].join()
-                    
                     logger.debug('LED blink thread stopped.')
                 
                 if led_state == 0:
@@ -188,13 +185,11 @@ def post():
                 
                 elif not knight_rider_stop.is_set() and led_state == 0:
                     logger.info('Turning off Knight Rider mode...')
-                    
                     knight_rider_stop.set()
                     knight_rider_thread.join()
                 
                 elif knight_rider_stop.is_set() and led_state == 1:
                     logger.info('Turning on Knight Rider mode...')
-                    
                     knight_rider_stop.clear()
                     
                     for i in range(KNIGHT_RIDER_START_LED, KNIGHT_RIDER_STOP_LED + 1):
@@ -302,8 +297,8 @@ if __name__ == "__main__":
     
     timed_out = threading.Event()
     timed_out.clear()
-    init_event_stop = threading.Event()
-    init_event_stop.clear()
+    init_mode_stop = threading.Event()
+    init_mode_stop.clear()
     knight_rider_stop = threading.Event()
     knight_rider_stop.set()
     
@@ -318,9 +313,9 @@ if __name__ == "__main__":
         init_mode_thread = threading.Thread(target=led_init_mode, daemon=True)
         init_mode_thread.start()
         
-        logger.info('Activating idle watchdog...')
-        
         if IDLE_WATCHDOG:
+            logger.info('Activating idle watchdog...')
+            
             while not timed_out.is_set():
                 timed_out.set()
                 sleep(IDLE_WATCHDOG_INTERVAL)
@@ -331,7 +326,7 @@ if __name__ == "__main__":
             timed_out.wait()
     
     except SystemExit:
-        init_event_stop.set()
+        init_mode_stop.set()
         knight_rider_stop.set()
         
         logger.info('Stopping wrestled...')

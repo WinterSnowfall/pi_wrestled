@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.80
-@date: 10/12/2022
+@version: 2.90
+@date: 12/12/2022
 '''
 
 import threading
@@ -85,6 +85,11 @@ class led:
             sleep(interval)
             
     def blink(self, interval):
+        #shouldn't happen in practice, but join if the blink thread is active
+        if self._led_blink:
+            self._led_blink = False
+            self._led_thread.join()
+            
         self._led_blink = True
         
         self._led_thread = threading.Thread(target=self._blink, 
