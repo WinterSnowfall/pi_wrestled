@@ -41,7 +41,7 @@ As for the playload you need to pass, doing a POST on <host_ip>:<host_port>/pi_l
 
 There's also a special "0" soft LED which controls a "Knight Rider" or "KITT" effect for your LED array, as shown here: https://media.tenor.com/images/09bb20a1e40457b7897ee99a13b6a8a9/tenor.gif
 
-An odd/even alternating LED test is started along with the REST server and notifies you that it is ready to receieve your REST calls. It also provides a way of validating that all your LEDs are working properly.
+This effect is automatically started with the pi_wrestled server and notifies you it is ready to receieve your REST calls. It also provides a way of validating that all your LEDs are working properly.
 
 ## How do you map the GPIO pins to LEDs?
 

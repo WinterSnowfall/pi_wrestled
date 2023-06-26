@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.90
-@date: 12/12/2022
+@version: 2.92
+@date: 26/06/2023
 '''
 
 import threading
 from time import sleep
-#un-comment for actual deployment on Raspberry Pi
+# un-comment for actual deployment on Raspberry Pi
 #import RPi.GPIO as GPIO
 
 #'''
-#dummy GPIO "simulator" class & object
-#comment for actual deployment on Raspberry Pi
+# dummy GPIO "simulator" class & object
+# comment for actual deployment on Raspberry Pi
 class GPIO_DUMMY:
     HIGH = '3.3V'
     LOW = '0V'
@@ -47,7 +47,7 @@ class led:
         self._led_thread = None
         
         GPIO.setup(self._led_port_no, GPIO.OUT)
-        #set LED to LOW state on init
+        # set LED to LOW state on init
         GPIO.output(self._led_port_no, GPIO.LOW)
     
     def turn_on(self):
@@ -76,7 +76,7 @@ class led:
             self._led_state_on = True
             sleep(interval)
             
-            #eagerly exit if no longer blinking
+            # eagerly exit if no longer blinking
             if not self._led_blink:
                 return
             
@@ -85,7 +85,7 @@ class led:
             sleep(interval)
             
     def blink(self, interval):
-        #shouldn't happen in practice, but join if the blink thread is active
+        # shouldn't happen in practice, but join if the blink thread is active
         if self._led_blink:
             self._led_blink = False
             self._led_thread.join()
@@ -93,7 +93,7 @@ class led:
         self._led_blink = True
         
         self._led_thread = threading.Thread(target=self._blink, 
-                                            args=((interval,)), daemon=True)
+                                            args=(interval, ), daemon=True)
         self._led_thread.start()
         
     def join(self):
