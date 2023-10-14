@@ -7,14 +7,14 @@ It lets you define your own led arrays and link soft LEDs with hardware pins (yo
 
 ## What do I need to do to get it running on my Raspberry Pi?
 
-Asumming you're using the default Raspbian, I think everything's already there. You may need to manually install flask for python3, as follows:
+You'll need to install flask and the waitress WSGI server for python3, as follows:
 ```
-sudo apt-get install python3-flask
+sudo apt-get install python3-flask python3-waitress
 ```
 
 ## REST??? How does that work?
 
-You'll need a REST client. Any will do, really.
+You can interact with pi_wrestled by using a REST client. Any will do, really.
 
 As for the playload you need to pass, doing a POST on <host_ip>:<host_port>/pi_led with one or multiple led entries, as follows:
 
@@ -50,5 +50,4 @@ It's all in led_array.conf (an actual live sample is provided based on my LED ar
 ## Can this break my Pi?
 
 Not if you've set up your LEDs properly, using resistors, not shorting things etc. Make sure you've gotten familiar with the hardware part and how that needs to be set up properly before you worry about pi_wrestled.
-
 

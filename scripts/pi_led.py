@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.92
-@date: 26/06/2023
+@version: 2.94
+@date: 14/10/2023
 '''
 
 import threading

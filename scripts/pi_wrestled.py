@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
 @author: Winter Snowfall
-@version: 2.92
-@date: 26/06/2023
+@version: 2.94
+@date: 14/10/2023
 '''
 
 import threading
@@ -15,6 +15,7 @@ from pi_led import led
 from flask import Flask
 from flask import request
 from flask import Response
+from waitress import serve
 # uncomment for debugging purposes only
 #import traceback
 
@@ -52,7 +53,8 @@ def led_control_server(led_array, timed_out, init_mode_stop,
     led_control.config['timed_out'] = timed_out
     led_control.config['init_mode_stop'] = init_mode_stop
     led_control.config['knight_rider_stop'] = knight_rider_stop
-    led_control.run(host=var_host, port=var_port)
+    # use the waitress WSGI server
+    serve(led_control, host=var_host, port=var_port)
 
 def led_init_mode(led_array):
     logger.debug('IM >>> Entering LED init test mode...')
