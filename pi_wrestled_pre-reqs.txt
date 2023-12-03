@@ -1,3 +1,0 @@
-#Raspberry Pi OS
-python3-flask
-
