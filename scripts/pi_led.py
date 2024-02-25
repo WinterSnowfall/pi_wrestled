@@ -16,17 +16,11 @@ import RPi.GPIO as GPIO
 #'''
 ######################################################
 
-PI_LED_BACKENDS = ('gpiozero', 'RPi.GPIO')
-# 'gpiozero' is required for deployment on 
-# a Raspberry Pi 5, and generally recommended,
-# while 'RPi.GPIO' is included as a fallback
-PI_LED_USED_BACKEND = 'gpiozero'
-
 ######################################################
 # comment for actual deployment on a Raspberry Pi    #
 ######################################################
 '''
-# dummy RPi.GPIO "simulator" class & object
+# simple logging RPi.GPIO simulator
 class GPIO_DUMMY:
     HIGH = '3.3V'
     LOW = '0V'
@@ -51,7 +45,7 @@ class GPIO_DUMMY:
 
 GPIO = GPIO_DUMMY()
 
-# dummy gpiozero "simulator" class & object
+# simple logging gpiozero simulator
 class LED_ZERO:
 
     def __init__(self, led_port_no):
@@ -63,6 +57,14 @@ class LED_ZERO:
     def off(self):
         print(f'SIMULATOR: Off state on port {self.led_port_no}')
 '''
+######################################################
+
+################### BACKEND CONFIG ###################
+PI_LED_BACKENDS = ('gpiozero', 'RPi.GPIO')
+# 'gpiozero' is required for deployment on 
+# a Raspberry Pi 5, and generally recommended,
+# while 'RPi.GPIO' is included as a fallback
+PI_LED_USED_BACKEND = 'gpiozero'
 ######################################################
 
 if PI_LED_USED_BACKEND == PI_LED_BACKENDS[1]:
