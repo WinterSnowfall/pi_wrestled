@@ -1,5 +1,5 @@
 # pi_wrestled
-The next best thing after the invention of garlic bread. Well, yes, but actually no. It's actually my own version of this: https://projects.raspberrypi.org/en/projects/dancing-unicorn-rainbow minus the dancing unicorn, but adding individual LED control via REST calls. It's written in python3, using the RPi.GPIO interfaces to set LED states, which is pretty much the standard way to do it with a Raspberry Pi.
+The next best thing after the invention of garlic bread. Well, yes, but actually no. It's actually my own version of this: https://projects.raspberrypi.org/en/projects/dancing-unicorn-rainbow minus the dancing unicorn, but adding individual LED control via REST calls. It's written in python3, using the gpiozero or RPi.GPIO interfaces to set LED states, which is pretty much the standard way to do it with a Raspberry Pi.
 
 ## What does/can it do?
 
