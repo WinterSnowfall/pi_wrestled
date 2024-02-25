@@ -49,13 +49,13 @@ GPIO = GPIO_DUMMY()
 class LED_ZERO:
 
     def __init__(self, led_port_no):
-        self.led_port_no = led_port_no
+        self._led_port_no = led_port_no
 
     def on(self):
-        print(f'SIMULATOR: On state on port {self.led_port_no}')
+        print(f'SIMULATOR: On state on port {self._led_port_no}')
 
     def off(self):
-        print(f'SIMULATOR: Off state on port {self.led_port_no}')
+        print(f'SIMULATOR: Off state on port {self._led_port_no}')
 '''
 ######################################################
 
